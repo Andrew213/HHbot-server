@@ -9,8 +9,7 @@ dotenv.config();
 const server: Express = express();
 server.use(
   cors({
-    // origin: 'https://hhbot.netlify.app',
-    origin: "http://localhost:5173",
+    origin: "https://hhbot.tech",
 
     credentials: true,
   })
