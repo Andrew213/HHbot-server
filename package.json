@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@hokify/agenda": "^6.3.0",
+    "agenda": "^5.0.0",
     "axios": "^1.6.8",
     "config": "^3.3.9",
     "cors": "^2.8.5",
