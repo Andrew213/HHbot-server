@@ -5,6 +5,7 @@ import cors from "cors";
 import router from "./router";
 import dotenv from "dotenv";
 import Agenda from "agenda";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -36,19 +37,26 @@ server
 
 const agenda = new Agenda({
   db: {
-    address:
-      "mongodb+srv://andreybelii2017:BcrvEHOQUWmGrFGu@cluster1.2zmeidz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1",
+    address: process.env.MONGO_CONNECTION,
     collection: "scheduleJobs",
   },
 });
 
 agenda.define("hello", async (job, done) => {
   console.log(`slam allekum minute`);
+  job.repeatEvery("24 hours", {
+    skipImmediate: true,
+  }),
+    job.save();
+  done();
 });
 
 (async function () {
   await agenda.start();
-  agenda.schedule("everyday at 15:40", "hello", {});
+  // тут остановился. играюсь с агенда
+  agenda.schedule("everyday at 11:33", "hello", {});
+
+  // const collection = mongoose.connection.collection("my-collection");
 })();
 
 async function graceful() {
