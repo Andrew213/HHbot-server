@@ -6,6 +6,10 @@ import router from "./router";
 import dotenv from "dotenv";
 import Agenda from "agenda";
 import mongoose from "mongoose";
+import nodemailer from "nodemailer";
+import dayjs from "dayjs";
+
+import "dayjs/locale/ru";
 
 dotenv.config();
 
@@ -42,21 +46,52 @@ const agenda = new Agenda({
   },
 });
 
-agenda.define("hello", async (job, done) => {
-  console.log(`slam allekum minute`);
+mongoose
+  .connect(process.env.MONGO_CONNECTION)
+  .then(() => {
+    console.log("MongoDB is Connected..");
+  })
+  .catch((err) => {
+    console.log(err.message);
+  });
+
+const sendMails = async () => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "mega.zip2013@gmail.com", // Адрес отправителя
+      pass: process.env.GMAIL_PASS, // Пароль приложения
+    },
+  });
+
+  const collection = mongoose.connection.collection("scheduleJobs");
+
+  const cursor = await collection.find({});
+  const documents = await cursor.toArray();
+
+  transporter.sendMail({
+    from: "HHbot", // Адрес отправителя
+    to: "a.kochanov31@yandex.ru", // Адрес получателя
+    subject: "Тема из nodejs", // Тема письма
+    text: `письмо пришло в ${dayjs()} 
+    Данные из бд:  ${JSON.stringify(documents)}
+    `, // Текст письма
+  });
+};
+
+agenda.define("send mail", async (job, done) => {
+  await sendMails();
   job.repeatEvery("24 hours", {
     skipImmediate: true,
-  }),
-    job.save();
+  });
+  job.save();
   done();
 });
 
 (async function () {
   await agenda.start();
   // тут остановился. играюсь с агенда
-  agenda.schedule("everyday at 11:33", "hello", {});
-
-  // const collection = mongoose.connection.collection("my-collection");
+  await agenda.schedule("everyday at 13:30", "send mail", {});
 })();
 
 async function graceful() {
