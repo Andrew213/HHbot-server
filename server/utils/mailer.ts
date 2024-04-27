@@ -15,7 +15,7 @@ const sendMail = (
   stack: { name: string; info: string; link: string }[]
 ) => {
   const mailHtml = `
-    <h2>Вакансии на которые был отправлен отклик: </h2>
+    <h2>Вакансии, на которые был отправлен отклик: </h2>
     <ul style="list-style-type: none">
     ${stack
       .map(({ name, info, link }, i) => {
