@@ -5,9 +5,8 @@ import { agenda } from "../../..";
 
 export function scheduleRouter(router: Router) {
   router.post("/api/schedule", schedule);
-  router.get("/api/schedule", async (req, res) => {
-    const { userId } = req.query;
-    const jobs = await agenda.jobs({ name: userId });
+  router.get("/api/schedule/:id", async (req, res) => {
+    const jobs = await agenda.jobs({ name: req.params.id });
 
     if (jobs.length) {
       res.send(jobs[0]);
