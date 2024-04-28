@@ -38,6 +38,7 @@ export const agenda = new Agenda({
   db: {
     address: process.env.MONGO_CONNECTION,
     collection: "scheduleJobs",
+    // collection: "scheduleTest",
   },
 });
 

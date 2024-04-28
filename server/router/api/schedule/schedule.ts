@@ -3,10 +3,12 @@ import sendMail from "../../../utils/mailer";
 import { api } from "..";
 import { agenda } from "../../..";
 
-const stack: { name: string; info: string; link: string }[] = [];
-
 const schedule = async (req: Request, res: Response) => {
   const { hours, minutes, count, resume_id, message, email } = req.body;
+
+  let stack: { name: string; info: string; link: string }[] = [];
+
+  let queue = [];
 
   // 1. Смотрю есть ли уже запущенная таска
   const job = await agenda.jobs({ name: resume_id });
@@ -16,26 +18,37 @@ const schedule = async (req: Request, res: Response) => {
 
     agenda.define(resume_id, async (job, done) => {
       try {
-        // 3. Получаю нужное кол-во вакансий для этого резюме
-        const response = await api
-          .getData(
-            `resumes/${resume_id}/similar_vacancies?page=0&per_page=${count}`
-          )
-          .then((response) => response.data)
-          .catch((err) => {
-            job.fail(err.data);
-            done();
-            res.status(403).send(err);
-          });
+        let page = 1;
 
-        // 4. Итерируюсь по вакансиям и отправляю отклик (так же как и на клиенте)
-        for (let i = 0; i < response.items.length; i++) {
-          const vacancy = response.items[i];
+        // 3. Получаю 300 вакансий. Чтобы при максимально возможных запланированных откликах меньше был шанс того что вакансий без тестового задания будет меньше
+        while (page < 4) {
+          const response = await api
+            .getData(
+              `resumes/${resume_id}/similar_vacancies?page=${page}&per_page=100`
+            )
+            .then((response) => response.data)
+            .catch((err) => {
+              res.status(403).send(err);
+            });
+
+          // 4. фильтрую вакансии по тестовому
+          const vanacies_with_no_test = response.items.filter(
+            (el) => !el.has_test
+          );
+
+          queue = queue.concat(vanacies_with_no_test);
+
+          page++;
+        }
+
+        // 5. Итерируюсь по вакансиям и отправляю отклик (так же как и на клиенте)
+        for (let i = 0; i < count; i++) {
+          // 6. Беру вакансию из очереди
+          const vacancy = queue[i];
 
           if (
-            !vacancy.has_test &&
-            ((vacancy.response_letter_required && message) ||
-              !vacancy.response_letter_required)
+            (vacancy.response_letter_required && message) ||
+            !vacancy.response_letter_required
           ) {
             const formData = new FormData();
 
@@ -65,7 +78,7 @@ const schedule = async (req: Request, res: Response) => {
         }
       } catch (err) {
         job.fail(err.data);
-        console.log(`ERR IN AGENDA`);
+        console.log(`ERR IN AGENDA`, err);
       }
 
       job.save();
