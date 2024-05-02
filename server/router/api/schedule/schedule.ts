@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import sendMail from '../../../utils/mailer';
-import { api } from '..';
 import { agenda } from '../../..';
 import axios from 'axios';
+import { Job } from 'agenda';
 
 export type stackT = {
     name: string;
@@ -130,8 +130,7 @@ const schedule = async (req: Request, res: Response) => {
                 job.fail(err.data);
                 console.log(`ERR IN AGENDA`, err);
             }
-
-            job.save();
+            await job.save();
             done();
         });
 
@@ -141,12 +140,15 @@ const schedule = async (req: Request, res: Response) => {
             timezone: 'Europe/Moscow'
         });
 
-        agenda.on('complete', job => {
+        const onSuccess = (job: Job) => {
             // 7. По завршению таски и если есть отклики то отправляю сообщение на почту
             if (job.attrs.name === resume_id && stack.length) {
+                console.log(`job`, job.attrs);
                 sendMail(email, stack);
             }
-        });
+        };
+
+        agenda.on(`success:${resume_id}`, onSuccess);
 
         async function graceful() {
             await agenda.stop();

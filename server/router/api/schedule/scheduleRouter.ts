@@ -22,6 +22,7 @@ export function scheduleRouter(router: Router) {
             name: req.params.id
         });
         if (jobs.length) {
+            agenda.removeAllListeners();
             agenda.cancel({
                 name: req.params.id
             });
