@@ -17,8 +17,6 @@ export type stackT = {
 const schedule = async (req: Request, res: Response) => {
     const { hours, minutes, resume_id, message, email } = req.body;
 
-    let stack: stackT[] = [];
-
     let queue = [];
 
     // 1. Смотрю есть ли уже запущенная таска
@@ -30,6 +28,8 @@ const schedule = async (req: Request, res: Response) => {
         agenda.define(resume_id, async (job, done) => {
             try {
                 let page = 0;
+
+                let stack: stackT[] = [];
 
                 // 3. Получаю 300 вакансий. Чтобы при максимально возможных запланированных откликах меньше был шанс того что вакансий без тестового задания будет меньше
                 while (page < 3) {
@@ -126,6 +126,7 @@ const schedule = async (req: Request, res: Response) => {
                             });
                     }
                 }
+                sendMail(email, stack);
             } catch (err) {
                 job.fail(err.data);
                 console.log(`ERR IN AGENDA`, err);
@@ -139,16 +140,6 @@ const schedule = async (req: Request, res: Response) => {
         await agenda.every(`${minutes} ${hours} * * *`, resume_id, req.body, {
             timezone: 'Europe/Moscow'
         });
-
-        const onSuccess = (job: Job) => {
-            // 7. По завршению таски и если есть отклики то отправляю сообщение на почту
-            if (job.attrs.name === resume_id && stack.length) {
-                console.log(`job`, job.attrs);
-                sendMail(email, stack);
-            }
-        };
-
-        agenda.on(`success:${resume_id}`, onSuccess);
 
         async function graceful() {
             await agenda.stop();
