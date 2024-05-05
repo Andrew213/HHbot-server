@@ -17,8 +17,6 @@ export type stackT = {
 const schedule = async (req: Request, res: Response) => {
     const { hours, minutes, resume_id, message, email } = req.body;
 
-    let queue = [];
-
     // 1. Смотрю есть ли уже запущенная таска
     const job = await agenda.jobs({ name: resume_id });
 
@@ -29,6 +27,7 @@ const schedule = async (req: Request, res: Response) => {
             try {
                 let page = 0;
 
+                let queue = [];
                 let stack: stackT[] = [];
 
                 // 3. Получаю 300 вакансий. Чтобы при максимально возможных запланированных откликах меньше был шанс того что вакансий без тестового задания будет меньше
@@ -126,7 +125,9 @@ const schedule = async (req: Request, res: Response) => {
                             });
                     }
                 }
-                sendMail(email, stack);
+                if (stack.length) {
+                    sendMail(email, stack);
+                }
             } catch (err) {
                 job.fail(err.data);
                 console.log(`ERR IN AGENDA`, err);
