@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import sendMail from '../../../utils/mailer';
 import { agenda } from '../../..';
 import axios from 'axios';
-import { Job } from 'agenda';
 
 export type stackT = {
     name: string;
@@ -15,7 +14,7 @@ export type stackT = {
 };
 
 const schedule = async (req: Request, res: Response) => {
-    const { hours, minutes, resume_id, message, email } = req.body;
+    const { hours, minutes, resume_id, message, email, savedSearch } = req.body;
 
     // 1. Смотрю есть ли уже запущенная таска
     const job = await agenda.jobs({ name: resume_id });
@@ -32,22 +31,26 @@ const schedule = async (req: Request, res: Response) => {
 
                 // 3. Получаю 300 вакансий. Чтобы при максимально возможных запланированных откликах меньше был шанс того что вакансий без тестового задания будет меньше
                 while (page < 3) {
-                    const response = await axios
-                        .get(
-                            `https://api.hh.ru/resumes/${resume_id}/similar_vacancies?page=${page}&per_page=100`,
-                            {
-                                headers: {
-                                    // 'Content-Type': 'application/json',
-                                    'Content-Type': 'multipart/form-data',
+                    const url = `${
+                        savedSearch
+                            ? `${savedSearch.url}&`
+                            : `https://api.hh.ru/resumes/${resume_id}/similar_vacancies?`
+                    }page=${page}&per_page=100`;
 
-                                    'User-Agent':
-                                        'HHbot (a.kochanov31@yandex.ru)',
-                                    Authorization: `Bearer ${req.cookies.access_token}`
-                                },
-                                withCredentials: true
-                            }
-                        )
-                        .then(response => response.data)
+                    const response = await axios
+                        .get(url, {
+                            headers: {
+                                // 'Content-Type': 'application/json',
+                                'Content-Type': 'multipart/form-data',
+
+                                'User-Agent': 'HHbot (a.kochanov31@yandex.ru)',
+                                Authorization: `Bearer ${req.cookies.access_token}`
+                            },
+                            withCredentials: true
+                        })
+                        .then(response => {
+                            return response.data;
+                        })
                         .catch(err => {
                             console.log(
                                 `ERR IN FILTER VACANCIES BY HAS_TEST`,
@@ -57,10 +60,32 @@ const schedule = async (req: Request, res: Response) => {
                             res.status(403).send(err);
                         });
 
-                    // 4. фильтрую вакансии по тестовому
-                    const vanacies_with_no_test = response.items.filter(
-                        el => !el.has_test
-                    );
+                    const filterRelations = [
+                        'got_response',
+                        'got_invitation',
+                        'got_rejection'
+                    ];
+
+                    // 4. фильтрую вакансии по тестовому И отсутствию отклика
+                    const vanacies_with_no_test = response.items.filter(el => {
+                        let required = true;
+                        let responseLetter = true;
+                        for (let i = 0; i < el.relations.length; i++) {
+                            const relation = el.relations[i];
+                            required = !filterRelations.some(
+                                el => el === relation
+                            );
+                            if (!required) {
+                                break;
+                            }
+                        }
+
+                        if (el.response_letter_required && !message) {
+                            responseLetter = false;
+                        }
+
+                        return !el.has_test && required && responseLetter;
+                    });
 
                     queue = queue.concat(vanacies_with_no_test);
 
