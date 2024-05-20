@@ -77,6 +77,7 @@ export function vacanciesRouter(router: Router) {
                         }
                         return required;
                     });
+                 
                     response.status(status).send(data);
                 })
                 .catch(({ status, data }) => {
@@ -85,36 +86,5 @@ export function vacanciesRouter(router: Router) {
         }
     );
 
-    router.get(
-        '/api/vacancies/saved_search',
-        async (request: Request, response: Response) => {
-            // const { url, saved_search_id } = request.query;
-            // console.log(`url `, url);
-            // console.log(`saved_search_id `, saved_search_id);
-            axios
-                .get(
-                    'https://api.hh.ru/vacancies?employment=full&employment=part&employment=project&no_magic=true&saved_search_id=75538013&text=React+frontend+developer&per_page=100' as string,
-                    {
-                        headers: {
-                            // 'Content-Type': 'application/json',
-                            'Content-Type': 'multipart/form-data',
 
-                            'User-Agent': 'HHbot (a.kochanov31@yandex.ru)',
-                            Authorization: `Bearer ${request.cookies.access_token}`
-                        },
-                        withCredentials: true
-                    }
-                )
-                .then(res =>
-                    console.log(
-                        `res `,
-                        // ТУТ ОСТАНОВИЛСЯ. НАДО ОТСОРТИРОВАТЬ ПО ПОЛЮ RELATIONS
-
-                        res.data.items.filter(el => el.id === '98511903')
-                    )
-                );
-
-            response.end();
-        }
-    );
 }

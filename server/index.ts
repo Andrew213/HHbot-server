@@ -4,6 +4,7 @@ import { parse } from 'qs';
 import Agenda from 'agenda';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from "helmet";
 import router from './router';
 
 import 'dayjs/locale/ru';
@@ -27,6 +28,7 @@ export const queryParser = (query: string) => {
 const PORT = process.env.SERVER_PORT || 5000;
 
 server.use(express.json());
+server.use(helmet())
 server
     .use(express.urlencoded({ extended: true }))
     .disable('x-powered-by')
