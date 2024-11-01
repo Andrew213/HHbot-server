@@ -4,7 +4,7 @@ import { parse } from 'qs';
 import Agenda from 'agenda';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import helmet from "helmet";
+import helmet from 'helmet';
 import router from './router';
 
 import 'dayjs/locale/ru';
@@ -28,7 +28,7 @@ export const queryParser = (query: string) => {
 const PORT = process.env.SERVER_PORT || 5000;
 
 server.use(express.json());
-server.use(helmet())
+server.use(helmet());
 server
     .use(express.urlencoded({ extended: true }))
     .disable('x-powered-by')
@@ -43,9 +43,14 @@ export const agenda = new Agenda({
         // collection: 'scheduleTest'
     }
 });
+console.log(process.env.MONGO_CONNECTION);
+agenda.define('welcomeMessage', () => {
+    console.log('Sending a welcome message every few seconds');
+});
 
-agenda.start();
-
+agenda.start().then(() => {
+    agenda.purge();
+});
 async function graceful() {
     await agenda.stop();
     process.exit(0);
