@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { userApiServer } from './user';
 import auth from '../../../middlewares/auth';
+import axios from 'axios';
 
 export function userRouter(router: Router) {
     router.get(

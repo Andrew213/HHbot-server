@@ -13,7 +13,6 @@ const server: Express = express();
 server.use(
     cors({
         origin: 'http://localhost:5173',
-
         credentials: true
     })
 );
@@ -39,8 +38,8 @@ server
 export const agenda = new Agenda({
     db: {
         address: process.env.MONGO_CONNECTION,
-        collection: 'scheduleJobs'
-        // collection: 'scheduleTest'
+        // collection: 'scheduleJobs'
+        collection: 'scheduleTest'
     }
 });
 console.log(process.env.MONGO_CONNECTION);

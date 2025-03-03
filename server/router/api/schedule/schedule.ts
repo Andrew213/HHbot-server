@@ -36,13 +36,10 @@ const schedule = async (req: Request, res: Response) => {
                             ? `${savedSearch.url}&`
                             : `https://api.hh.ru/resumes/${resume_id}/similar_vacancies?`
                     }page=${page}&per_page=100`;
-
                     const response = await axios
                         .get(url, {
                             headers: {
                                 // 'Content-Type': 'application/json',
-                                'Content-Type': 'multipart/form-data',
-
                                 'User-Agent': 'HHbot (a.kochanov31@yandex.ru)',
                                 Authorization: `Bearer ${req.cookies.access_token}`
                             },
@@ -114,8 +111,6 @@ const schedule = async (req: Request, res: Response) => {
                             .post('https://api.hh.ru/negotiations', formData, {
                                 headers: {
                                     // 'Content-Type': 'application/json',
-                                    'Content-Type': 'multipart/form-data',
-
                                     'User-Agent':
                                         'HHbot (a.kochanov31@yandex.ru)',
                                     Authorization: `Bearer ${req.cookies.access_token}`
