@@ -10,9 +10,18 @@ import router from './router';
 import 'dayjs/locale/ru';
 
 const server: Express = express();
+
+const allowedOrigins = ['http://localhost:5173', 'https://hhbot.tech'];
+
 server.use(
     cors({
-        origin: 'http://localhost:5173',
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true
     })
 );
